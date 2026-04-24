@@ -21,6 +21,7 @@ from typing import Optional
 
 class TranscriptionStatusPut(BaseModel):
     language: Optional[str] = None
+    model_type: Optional[str] = None
     speakers: Optional[int] = 0
     output_format: Optional[str] = None
     encryption_password: Optional[str] = None

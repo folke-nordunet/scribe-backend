@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 
 from functools import lru_cache
@@ -79,6 +80,115 @@ class Settings(BaseSettings):
 
     # External job configuration.
     EXTERNAL_JOB_MODEL: str = "slower transcription (higher accuracy)"
+
+    MODEL_PICKER_ENABLED: bool = False
+    TRANSCRIBER_MODEL_OPTIONS: str = """{
+        "Swedish": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Swedish (verbatim)": [
+            "slower transcription (higher accuracy)"
+        ],
+        "English": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Norwegian": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Norwegian (verbatim)": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Finnish": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Danish": [
+            "slower transcription (higher accuracy)"
+        ],
+        "French": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Spanish": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Portuguese": [
+            "slower transcription (higher accuracy)"
+        ],
+        "German": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Italian": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Dutch": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Russian": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Ukrainian": [
+            "slower transcription (higher accuracy)"
+        ],
+        "Icelandic": [
+            "slower transcription (higher accuracy)"
+        ]
+    }"""
+
+    def get_transcriber_model_options(self) -> dict[str, list[str]]:
+        try:
+            data = json.loads(self.TRANSCRIBER_MODEL_OPTIONS)
+            if isinstance(data, dict):
+                return {
+                    str(language): [str(model) for model in models]
+                    for language, models in data.items()
+                    if isinstance(models, list)
+                }
+        except Exception:
+            pass
+
+        return {
+            "Swedish": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "English": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "Norwegian": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "Finnish": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "Danish": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "French": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "Spanish": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "Portuguese": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "German": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "Italian": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "Dutch": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "Russian": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "Ukrainian": [
+                "Slower transcription (higher accuracy)",
+            ],
+            "Icelandic": [
+                "Slower transcription (higher accuracy)",
+            ],
+        }
 
     # Customer config
     CUSTOMER_MINUTES_PER_BLOCK: int = 4000

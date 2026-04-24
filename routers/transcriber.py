@@ -124,6 +124,48 @@ async def transcribe(
     return JSONResponse(content={"result": res})
 
 
+@router.get("/transcriber/options")
+async def get_transcriber_options(
+    user: dict = Depends(get_current_user),
+) -> JSONResponse:
+    raw_model_options = settings.get_transcriber_model_options()
+
+    base_languages = [
+        language
+        for language in raw_model_options.keys()
+        if not language.endswith(" (verbatim)")
+    ]
+
+    models_by_language = {}
+    default_model_by_language = {}
+
+    for language in base_languages:
+        normal_models = raw_model_options.get(language, [])
+        verbatim_models = raw_model_options.get(f"{language} (verbatim)", [])
+
+        ui_models = normal_models[:]
+
+        if language in ("Swedish", "Norwegian"):
+            for model in verbatim_models:
+                verbatim_label = f"{model} [verbatim]"
+                if verbatim_label not in ui_models:
+                    ui_models.append(verbatim_label)
+
+        models_by_language[language] = ui_models
+        default_model_by_language[language] = ui_models[0] if ui_models else None
+
+    return JSONResponse(
+        content={
+            "result": {
+                "model_picker_enabled": settings.MODEL_PICKER_ENABLED,
+                "languages": base_languages,
+                "models_by_language": models_by_language,
+                "default_model_by_language": default_model_by_language,
+            }
+        }
+    )
+
+
 @router.post("/transcriber")
 async def transcribe_file(
     request: Request,
@@ -272,12 +314,25 @@ async def update_transcription_status(
             status_code=403,
         )
 
+    model_options = settings.get_transcriber_model_options()
+    selected_model = item.model_type
+
+    if not settings.MODEL_PICKER_ENABLED or not selected_model:
+        selected_model = "Slower transcription (higher accuracy)"
+    else:
+        allowed_models = model_options.get(item.language or "", [])
+        if selected_model not in allowed_models:
+            return JSONResponse(
+                content={"result": {"error": "Invalid model for selected language"}},
+                status_code=400,
+            )
+
     if not (
         job := await job_update(
             job_id,
             user_id=user["user_id"],
             language=item.language,
-            model_type="Slower transcription (higher accuracy)",
+            model_type=selected_model,
             speakers=item.speakers,
             status="pending",
             output_format=item.output_format,
@@ -315,7 +370,7 @@ async def update_transcription_status(
             }
         }
     )
-
+    
 
 @router.put("/transcriber/{job_id}/result")
 async def put_transcription_result(
